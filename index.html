@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Cleanser Desktop</title>
+
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <!-- Babel for in-browser JSX compilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      /* Reset & Base */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #ffffff;
+      }
+
+      /* Container Layout */
+      .appContainer {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        min-height: 100vh;
+        background-color: #ffffff;
+        color: #000000;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        position: relative;
+        padding: 2rem;
+        box-sizing: border-box;
+      }
+
+      /* Header Area */
+      .topRightInfo {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        text-align: right;
+      }
+      .title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 500;
+      }
+      .subtitle {
+        margin: 0.25rem 0 0 0;
+        font-size: 0.85rem;
+        color: #888888;
+      }
+
+      /* Main Workspace */
+      .workspace {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        max-width: 1000px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      /* Action Buttons */
+      .actionBtn {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 1rem;
+        transition:
+          transform 0.2s ease,
+          opacity 0.2s ease;
+      }
+      .actionBtn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .actionBtn:not(:disabled):hover {
+        transform: scale(1.05);
+      }
+      .actionBtn:not(:disabled):active {
+        transform: scale(0.95);
+      }
+
+      /* Icons */
+      .shieldWrapper {
+        position: relative;
+        width: 60px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .iconShield {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        fill: #000000;
+      }
+      .shieldText {
+        position: relative;
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.9rem;
+        z-index: 2;
+        margin-bottom: 5px;
+      }
+      .iconTrash {
+        width: 60px;
+        height: 60px;
+        fill: #000000;
+      }
+      .arrowLeft,
+      .arrowRight {
+        width: 80px;
+        height: 80px;
+        fill: #8e8e8e;
+      }
+
+      /* Preview Card */
+      .previewCard {
+        width: 100%;
+        max-width: 450px;
+        aspect-ratio: 4 / 5;
+        background-color: #4a4a4a;
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 2rem;
+        box-sizing: border-box;
+        color: #ffffff;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      }
+      .previewContent {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        overflow: hidden;
+      }
+      .emptyState {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2rem;
+      }
+      .selectFolderBtn {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        text-decoration: underline;
+        transition: opacity 0.2s;
+      }
+      .selectFolderBtn:hover {
+        opacity: 0.8;
+      }
+      .fileName {
+        font-size: 1.2rem;
+        font-weight: 700;
+        text-align: center;
+        margin-top: 1rem;
+        word-break: break-all;
+      }
+
+      /* Specific File Type Previews */
+      .mediaPreview {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 8px;
+        object-fit: contain;
+      }
+      .audioWrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        width: 100%;
+      }
+      .audioIcon {
+        width: 80px;
+        height: 80px;
+        fill: #ffffff;
+        opacity: 0.6;
+      }
+      .audioPlayer {
+        width: 100%;
+        margin-top: 1rem;
+      }
+      .codePreview {
+        width: 100%;
+        height: 100%;
+        background: #1e1e1e;
+        border-radius: 8px;
+        padding: 1rem;
+        overflow: auto;
+        text-align: left;
+        font-family: monospace;
+        font-size: 0.85rem;
+        color: #d4d4d4;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      .genericFileIcon {
+        width: 100px;
+        height: 100px;
+        fill: #ffffff;
+        opacity: 0.7;
+      }
+
+      /* Footer */
+      .bottomRightVersion {
+        position: absolute;
+        bottom: 1.5rem;
+        right: 2rem;
+        color: #888888;
+        font-size: 1rem;
+      }
+
+      /* Trash Button Custom */
+      .viewTrashBtn {
+        position: absolute;
+        bottom: 1.5rem;
+        left: 2rem;
+        background: #000;
+        color: #fff;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .viewTrashBtn:hover {
+        background: #333;
+      }
+
+      @media (max-width: 800px) {
+        .workspace {
+          flex-direction: column;
+          gap: 1rem;
+        }
+        .actionBtn {
+          transform: rotate(90deg);
+        }
+        .shieldText {
+          transform: rotate(-90deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useRef } = React;
+
+      // --- DELETED SECTION COMPONENT ---
+      const DeletedSection = ({
+        deletedList = [],
+        onRestoreItem,
+        onPermanentDeleteItem,
+        onClose,
+      }) => {
+        return (
+          <div
+            className="appContainer"
+            style={{ zIndex: 100, backgroundColor: "#fff" }}
+          >
+            <header className="topRightInfo">
+              <h2 className="title">Deleted Section</h2>
+              <p className="subtitle">Items have a second chance</p>
+              <button
+                onClick={onClose}
+                className="selectFolderBtn"
+                style={{
+                  textDecoration: "none",
+                  fontSize: "2rem",
+                  marginTop: "1rem",
+                  color: "black",
+                }}
+              >
+                ↖ Close
+              </button>
+            </header>
+
+            <main
+              className="workspace"
+              style={{
+                flexDirection: "column",
+                padding: "100px 20px",
+                gap: "1rem",
+                maxWidth: "800px",
+                alignItems: "flex-start",
+                overflowY: "auto",
+              }}
+            >
+              <h1
+                style={{ fontSize: "2.5rem", fontWeight: 800, color: "#000" }}
+              >
+                Virtual Trash Bin
+              </h1>
+              {deletedList.length === 0 ? (
+                <div
+                  style={{
+                    marginTop: "2rem",
+                    color: "#666",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Virtual trash is empty.
+                </div>
+              ) : (
+                <div style={{ width: "100%", marginTop: "1rem" }}>
+                  {deletedList.map((item, index) => (
+                    <div
+                      key={item.relativePath || index}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        padding: "15px 20px",
+                        background: "#f4f4f4",
+                        borderRadius: "10px",
+                        marginBottom: "10px",
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          maxWidth: "60%",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "1.2rem",
+                            fontWeight: 600,
+                            color: "#333",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {item.name}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "#777",
+                            fontFamily: "monospace",
+                          }}
+                        >
+                          Path: {item.relativePath}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: "10px" }}>
+                        <button
+                          onClick={() => onRestoreItem(index)}
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            background: "#22c55e",
+                            color: "#fff",
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => onPermanentDeleteItem(index)}
+                          style={{
+                            padding: "8px 15px",
+                            borderRadius: "5px",
+                            background: "#ef4444",
+                            color: "#fff",
+                            border: "none",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Permanently Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </main>
+          </div>
+        );
+      };
+
+      // --- FILE CLEANSER COMPONENT ---
+      const FileCleanser = ({
+        isFirstTime,
+        file,
+        onSelectFolder,
+        onKeep,
+        onDelete,
+        onViewTrash,
+        trashCount,
+        version,
+      }) => {
+        const getCodeSnippet = (content, lines = 20) =>
+          content
+            ? content.split("\n").slice(0, lines).join("\n")
+            : "Loading preview...";
+
+        const renderPreview = () => {
+          if (!file)
+            return (
+              <div style={{ color: "#fff" }}>
+                All files reviewed! Reload to use again.
+              </div>
+            );
+          switch (file.typeHint) {
+            case "image":
+              return (
+                <img src={file.url} alt={file.name} className="mediaPreview" />
+              );
+            case "video":
+              return <video src={file.url} controls className="mediaPreview" />;
+            case "audio":
+              return (
+                <div className="audioWrapper">
+                  <svg viewBox="0 0 24 24" className="audioIcon">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" />
+                  </svg>
+                  <audio src={file.url} controls className="audioPlayer" />
+                </div>
+              );
+            case "code":
+              return (
+                <pre className="codePreview">
+                  <code>{getCodeSnippet(file.content)}</code>
+                </pre>
+              );
+            default:
+              return (
+                <div className="genericFile">
+                  <svg viewBox="0 0 24 24" className="genericFileIcon">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                  </svg>
+                </div>
+              );
+          }
+        };
+
+        return (
+          <div className="appContainer">
+            <header className="topRightInfo">
+              <h2 className="title">File cleanser</h2>
+              <p className="subtitle">System Temp & Cache Wipe (coming soon)</p>
+              <p className="subtitle">File manager (coming soon)</p>
+            </header>
+
+            <main className="workspace">
+              <button
+                className="actionBtn"
+                onClick={onKeep}
+                disabled={isFirstTime || !file}
+              >
+                <div className="shieldWrapper">
+                  <svg viewBox="0 0 24 24" className="iconShield">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                  </svg>
+                  <span className="shieldText">Keep</span>
+                </div>
+                <svg viewBox="0 0 24 24" className="arrowLeft">
+                  <polygon points="15.41,16.59 10.83,12 15.41,7.41 14,6 8,12 14,18" />
+                </svg>
+              </button>
+
+              <div className="previewCard">
+                <div className="previewContent">
+                  {isFirstTime ? (
+                    <div className="emptyState">
+                      <button
+                        className="selectFolderBtn"
+                        onClick={onSelectFolder}
+                      >
+                        Select Folder
+                      </button>
+                    </div>
+                  ) : (
+                    renderPreview()
+                  )}
+                </div>
+                <div className="fileName">
+                  {file ? file.name : isFirstTime ? "..." : "Done!"}
+                </div>
+              </div>
+
+              <button
+                className="actionBtn"
+                onClick={onDelete}
+                disabled={isFirstTime || !file}
+              >
+                <svg viewBox="0 0 24 24" className="arrowRight">
+                  <polygon points="8.59,16.59 13.17,12 8.59,7.41 10,6 16,12 10,18" />
+                </svg>
+                <svg viewBox="0 0 24 24" className="iconTrash">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>
+              </button>
+            </main>
+
+            <button className="viewTrashBtn" onClick={onViewTrash}>
+              View Trash ({trashCount})
+            </button>
+            <footer className="bottomRightVersion">V {version}</footer>
+          </div>
+        );
+      };
+
+      // --- MASTER APP CONTROLLER ---
+      const App = () => {
+        const [view, setView] = useState("cleanser");
+        const [isFirstTime, setIsFirstTime] = useState(true);
+        const [fileQueue, setFileQueue] = useState([]);
+        const [deletedList, setDeletedList] = useState([]);
+        const fileInputRef = useRef(null);
+
+        // Trigger the hidden file input
+        const triggerFolderSelection = () => {
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
+          }
+        };
+
+        // Process the files selected by the user
+        const handleFileChange = (event) => {
+          const files = Array.from(event.target.files);
+          if (files.length === 0) return;
+
+          const newQueue = files.map((file) => {
+            let typeHint = "unknown";
+
+            // Determine type based on MIME type or extension
+            if (file.type.startsWith("image/")) typeHint = "image";
+            else if (file.type.startsWith("video/")) typeHint = "video";
+            else if (file.type.startsWith("audio/")) typeHint = "audio";
+            else if (
+              file.type.startsWith("text/") ||
+              file.type === "application/javascript" ||
+              file.type === "application/json" ||
+              file.name.endsWith(".md") ||
+              file.name.endsWith(".js") ||
+              file.name.endsWith(".jsx") ||
+              file.name.endsWith(".ts") ||
+              file.name.endsWith(".tsx") ||
+              file.name.endsWith(".css") ||
+              file.name.endsWith(".html") ||
+              file.name.endsWith(".py")
+            ) {
+              typeHint = "code";
+            }
+
+            // Create local Object URLs for media files
+            const url =
+              typeHint === "image" ||
+              typeHint === "video" ||
+              typeHint === "audio"
+                ? URL.createObjectURL(file)
+                : null;
+
+            return {
+              originalFile: file, // Keep reference to read text later if needed
+              name: file.name,
+              relativePath: file.webkitRelativePath || file.name,
+              mimeType: file.type || "unknown",
+              typeHint: typeHint,
+              url: url,
+              content: null, // We will read this asynchronously if it's code
+            };
+          });
+
+          setFileQueue(newQueue);
+          setIsFirstTime(false);
+        };
+
+        // Read text content asynchronously for the top code file
+        useEffect(() => {
+          const activeFile = fileQueue[0];
+          if (
+            activeFile &&
+            activeFile.typeHint === "code" &&
+            activeFile.content === null
+          ) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              setFileQueue((prev) => {
+                const newQ = [...prev];
+                if (
+                  newQ[0] &&
+                  newQ[0].relativePath === activeFile.relativePath
+                ) {
+                  newQ[0].content = e.target.result;
+                }
+                return newQ;
+              });
+            };
+
+            // Only read the first 10KB so we don't freeze the app on massive minified files or huge logs
+            const blob = activeFile.originalFile.slice(0, 10240);
+            reader.readAsText(blob);
+          }
+        }, [fileQueue]);
+
+        const handleKeep = () => setFileQueue((prev) => prev.slice(1));
+
+        const handleDelete = () => {
+          const fileToTrash = fileQueue[0];
+          setDeletedList((prev) => [...prev, fileToTrash]);
+          setFileQueue((prev) => prev.slice(1));
+        };
+
+        const handleRestoreItem = (index) => {
+          const item = deletedList[index];
+          setFileQueue((prev) => [item, ...prev]);
+          setDeletedList((prev) => prev.filter((_, i) => i !== index));
+        };
+
+        const handlePermanentDelete = (index) => {
+          setDeletedList((prev) => prev.filter((_, i) => i !== index));
+        };
+
+        return (
+          <>
+            {/* Hidden file input for folder selection */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: "none" }}
+              webkitdirectory="true"
+              directory="true"
+              multiple
+              onChange={handleFileChange}
+            />
+
+            {view === "trash" ? (
+              <DeletedSection
+                deletedList={deletedList}
+                onRestoreItem={handleRestoreItem}
+                onPermanentDeleteItem={handlePermanentDelete}
+                onClose={() => setView("cleanser")}
+              />
+            ) : (
+              <FileCleanser
+                isFirstTime={isFirstTime}
+                file={fileQueue.length > 0 ? fileQueue[0] : null}
+                onSelectFolder={triggerFolderSelection}
+                onKeep={handleKeep}
+                onDelete={handleDelete}
+                onViewTrash={() => setView("trash")}
+                trashCount={deletedList.length}
+                version="1.2"
+              />
+            )}
+          </>
+        );
+      };
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
