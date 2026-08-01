@@ -33,7 +33,7 @@ No accidental deletions, no slow right-clicking — just fast decisions.
 
 ### Option 1: Executable Installer (Recommended)
 1. Go to the **[Latest Release Page](https://github.com/ShriNakul/SSDC/releases/latest)**.
-2. Download `File Cleanser Setup 1.0.0.exe`.
+2. Download `File Cleanser Setup 0.0.0.exe`.
 3. Double-click the installer to launch the desktop application.
 
 ### Option 2: Run from Source
